@@ -30,7 +30,6 @@ class TaskEnvironment(object):
     def __init__ (self, dimensions):
         """Given a list of two integers>=1 which specify x,y-extensions, 
         initialize a grid world. Simple example: env = TaskEnvironment([2,3])"""
-        self.max_steps_per_trial = 10**6
         self.num_percepts_list = dimensions
         self.position = np.array([0, 0]) #keeps track of where the agent is located  
         self.rewards = np.zeros(dimensions)  #specifies the rewards (if any) located at each gridpoint

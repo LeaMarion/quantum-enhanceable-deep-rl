@@ -3,55 +3,86 @@ import gym
 import os
 import sys
 import numpy as np
+import pathlib
+from sys import argv
+import argparse
+import pickle
+
 
 sys.path.insert(0, 'agents')
 sys.path.insert(0, 'environments')
 
-from env_grid_world import *
-from ebm_ps_stable import *
+from env_gridworld import *
+from debn_ps import *
+
+'''
+Usage: run command line of the form `python run_debn_gridworld.py --agent_number (int)`
+e.g. `python run_debn_gridworld.py --agent_number 0` 
+Run code with --agent_number n for n in {0,..,50} to gather data for 50 different agents 
+'''
 
 torch.set_num_threads(1)
+
 #####################################################################################
+def get_args(argv):
+    """
+    Passes the arguments from the runfile to the main file or passes the default values to the main file.
+    These arguments define the filename under which the data is saved.
+    Returns a namespace object that makes each element callable by args.name.
+    Args:
+        argv  (list) list of arguments that are passed through with a --name
+
+    Returns:
+        args  (namespace) namespace of all arguments passed through
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--beta_f', type=int, default=0.8, help='number of episodes')
+    parser.add_argument('--learning_rate', type=float, default=0.0001, help='learning rate of the optimizer')
+    parser.add_argument('--target_update', type=int, default=100, help='update interval of the target network')
+    parser.add_argument('--schedule', type=str, default='htan', help='interval between each experience replay')
+    parser.add_argument('--agent_number', type=int, default=0, help='index for the agent to gather statistics')
+
+    args = parser.parse_args(argv)
+    return args
+
+args = get_args(argv[1:])
 
 
-args = sys.argv
-
-# environment
-ENV = 'gridworld'
-
-# stats
-EPISODES = 3000  # number of episodes for each agent 2000
-MAX_STEPS_PER_TRIAL = 20000  # number of allowed timesteps before reset
+# INTERACTION PARAMETERS
+EPISODES = 1200  # number of episodes for each agent 2000
+MAX_STEPS_PER_TRIAL = 10  # number of allowed timesteps before reset 20000
 
 #agent parameters
-AGENT_NAME = 'ebm'
-AGENT_NUMBER = 0
-hidden_layers = 1 #
-hidden_units_layer = 64 #f
-NUM_HIDDEN = [int(round(hidden_units_layer))]*hidden_layers
-DROPOUT = [0.]*hidden_layers
+AGENT_NUMBER = args.agent_number
 DEVICE = 'cpu'
-LEARNING_RATE = 0.001#float(args[3]) #float(args[3])
-CAPACITY = 5000  # size of memory | Acrobot: 5000 |
-BATCH_SIZE = 100 #int(args[4]) # size of training batch | Acrobot: 1000 |
-REPLAY_TIME = 10
-TARGET_UPDATE = 10000#int(args[2]) #float(args[2])
-GAMMA = 0.99
+AGENT_NAME = 'ebm'
 
-BETA_i = 0.001
-BETA_f = 1.0 #float(args[1])
-schedule = 'htan' #str(args[4])
-if schedule == 'htan':
-    beta = np.tanh(np.linspace(BETA_i, BETA_f, EPISODES))
-elif schedule =='lin':
-    beta = np.linspace(BETA_i, BETA_f, EPISODES)
+GAMMA = 0.99 # discount factor
+hidden_layers = 1 # number of hidden layers
+hidden_units_layer = 64 # number of hidden units
+NUM_HIDDEN = [int(round(hidden_units_layer))]*hidden_layers # list of hidden unit numbers list
+DROPOUT = [0.]*hidden_layers # dropout rate list
+LEARNING_RATE = args.learning_rate # learning rate
+CAPACITY = 5000 # size of the memory
+BATCH_SIZE = 100 # size of the training batch for experience replay
+REPLAY_TIME = 100 # the time interval between each experience replay
+TARGET_UPDATE = args.target_update # update interval for the target network
+SAVE_MODEL = False #set to true to save state dict
+
+BETA_i = 0.001 # initial beta parameter for schedule
+BETA_f = args.beta_f # final beta parameter for schedule
+SCHEDULE = args.schedule # name of the schedule
+if SCHEDULE == 'htan':
+    beta = np.tanh(np.linspace(BETA_i, BETA_f, EPISODES)) # tanh schedule
+elif SCHEDULE =='lin':
+    beta = np.linspace(BETA_i, BETA_f, EPISODES) # linear scchedule
 
 # ENVIRONMENT PARAMETERS
-env_name = ENV
-DIMENSIONS = [100,100]
+ENV_NAME = 'gridworld' # environment name
+DIMENSIONS = [100,100] # 2D grid of size [100,100]
 env = TaskEnvironment(DIMENSIONS) #generate environment
 percept_size = DIMENSIONS[0]+DIMENSIONS[1] #size of the percept space
-action_size = 4 #size of the action space
+action_size = 4 # size of the action space
 
 #action encoding
 all_actions = torch.empty(0)
@@ -71,19 +102,18 @@ def to_two_hot(percept, dim):
     one_hot[dim[0]+percept[1]] = 1
     return one_hot
 
-#perparations for saving results
-foldername = 'results/cluster-gridworld-results/'
-filename = ENV+'_'+AGENT_NAME+'_Bf='+str(BETA_f)+'_LR='+str(LEARNING_RATE)+'_TU='+str(TARGET_UPDATE)+'_S='+schedule+'_'+str(AGENT_NUMBER)+'.txt'
+# DEFINE FILENAME TO SAVE RESULTS
+foldername = 'results/'
+pathlib.Path(foldername).mkdir(parents=True, exist_ok=True)
+filename = ENV_NAME+'_'+AGENT_NAME+'_Bf='+str(BETA_f)+'_LR='+str(LEARNING_RATE)+'_TU='+str(TARGET_UPDATE)+'_S='+SCHEDULE+'_'+str(AGENT_NUMBER)
 print(filename)
 
 if __name__ == "__main__":
     agent = DEBNAgent(percept_size, action_size, all_actions, dim_hidden=NUM_HIDDEN, dropout_rate=DROPOUT,
                      device = DEVICE, learning_rate=LEARNING_RATE, capacity=CAPACITY, batch_size=BATCH_SIZE, replay_time=REPLAY_TIME,
                      target_update = TARGET_UPDATE, gamma = GAMMA)
-    #track running average
-    # overwrite existing resultfile
-    if os.path.exists(foldername+filename):
-        os.remove(foldername+filename)
+
+    timesteps = []
     for e in range(EPISODES):
         counter = 0
         #reset the environment
@@ -102,12 +132,17 @@ if __name__ == "__main__":
             percept = torch.Tensor(percept)
             if t==MAX_STEPS_PER_TRIAL:
                 reward = -1
+                done = True
             agent.learn(percept, action, reward, done)
-            if done or t==MAX_STEPS_PER_TRIAL:
-                print("episode: {}/{}, time until done: {}".format(e, EPISODES, t))
-                sys.stdout.flush()
-                #save results to a file
-                with open(foldername+filename, 'a') as results_logger:
-                    results_logger.write('%a\n' % (t))
-                    results_logger.flush()
+            if done:
+                timesteps.append(t)
                 break
+
+        if e%100 == 0:
+            print("Average last 100 scores (timesteps per episode) the agent achieved at " + str(e) + ": ", np.mean(timesteps[-100:]))
+            # save data to file
+            pickle.dump(timesteps, open(foldername+filename, "wb"))
+
+    # Save model
+    if SAVE_MODEL:
+        torch.save(agent.policy_net.state_dict(), 'saved_models/state_dict_'+filename+'.pckl')
