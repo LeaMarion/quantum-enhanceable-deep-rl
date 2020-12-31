@@ -31,7 +31,6 @@ def get_args(argv):
     Returns a namespace object that makes each element callable by args.name.
     Args:
         argv  (list) list of arguments that are passed through with a --name
-
     Returns:
         args  (namespace) namespace of all arguments passed through
     """
@@ -40,7 +39,7 @@ def get_args(argv):
     parser.add_argument('--hidden_layers', type=int, default=2, help='number of hidden layers')
     parser.add_argument('--hidden_units', type=int, default=19, help='number of hidden units in each hidden layer')
     parser.add_argument('--learning_rate', type=float, default=0.01, help='learning rate of the optimizer')
-    parser.add_argument('--target_update', type=int, default=5000, help='update interval of the target network')
+    parser.add_argument('--target_update', type=int, default=1000, help='update interval of the target network')
     parser.add_argument('--batch_size', type=int, default=200, help='size of the training batch for experience replay')
     parser.add_argument('--agent_number', type=int, default=1, help='index for the agent to gather statistics')
 
@@ -67,8 +66,8 @@ CAPACITY = 2000 # size of memory
 BATCH_SIZE = args.batch_size # size of the training batch for experience replay
 REPLAY_TIME = 5 # the time interval between each experience replay
 TARGET_UPDATE = args.target_update # update interval for the target network
-BETA = 0.001 # beta parameter for softmax schedule
-beta = np.tanh(np.linspace(BETA, 1, EPISODES)) # softmax schedule
+BETA = 0.01 # beta parameter for softmax schedule
+beta = np.tanh(np.linspace(BETA, 10, EPISODES)) # softmax schedule
 SAVE_MODEL = False # set to true to save state dict
 
 # ENVIRONMENT PARAMETERS
@@ -111,18 +110,18 @@ if __name__ == "__main__":
         t=0
 
         while not done:
-            action = agent.deliberate(percept, beta[e])
-            action_index = (action[0] == 1).nonzero().item()
-            percept, reward, done, _ = env.step(action_index)
-            percept = np.reshape(percept, [1, 4])
+            action = agent.deliberate_and_learn(percept, reward, GAMMA, beta[e], done)
+            action = (action[0] == 1).nonzero().item()
+            percept, reward, done, _ = env.step(action)
+            percept = np.reshape(percept, [1, percept_size])
             percept = torch.Tensor(percept)
-            agent.learn(percept, action, reward, done)
             if done:
                 timesteps.append(t)
+                agent.deliberate_and_learn(percept, reward, GAMMA, beta[e], done)
             t += 1
 
         if e%1 == 0:
-            print("Average last 1 scores (timesteps per episode) the agent achieved a " + str(e) + ": ", np.mean(timesteps[-1:]))
+            print("Last score (timesteps per episode) the agent achieved at " + str(e) + ": ", np.mean(timesteps[-1:]))
             # save data to file
             pickle.dump(timesteps, open(foldername+filename, "wb"))
 
@@ -130,4 +129,4 @@ if __name__ == "__main__":
     if SAVE_MODEL:
         torch.save(agent.policy_net.state_dict(), 'saved_models/state_dict_' + filename + '.pckl')
 
-env.env.close()
+env.close()
