@@ -99,21 +99,21 @@ if __name__ == "__main__":
 				agent = DEBNAgent(percept_size, action_length, all_actions,
 							 capacity=CAPACITY, batch_size=BATCH_SIZE, learning_rate=LEARNING_RATE,
 							 dim_hidden=NUM_HIDDEN_DEBN, dropout_rate=DROPOUT_RATE, gamma=GAMMA,
-							 target_update = TARGET_UPDATE, replay_time = REPLAY)
+							 target_update = TARGET_UPDATE, replay_time = REPLAY, episodic = False)
 			elif str(args[2])=="dqn":
 				agent = DQNAgent(percept_size, action_size, dim_hidden=NUM_HIDDEN_DQN, dropout_rate=DROPOUT_RATE, target_update=TARGET_UPDATE,
 							 device=DEVICE, learning_rate=LEARNING_RATE, capacity=CAPACITY,
-							 batch_size=BATCH_SIZE, gamma = GAMMA, replay_time = REPLAY)
+							 batch_size=BATCH_SIZE, gamma = GAMMA, replay_time = REPLAY, episodic = False)
 		if str(args[1])=="ps":
 			if str(args[2])=="debn":
 				agent = DEBNAgent(percept_size, action_length, all_actions,
 							 capacity=CAPACITY, batch_size=BATCH_SIZE, learning_rate=LEARNING_RATE,
 							 dim_hidden=NUM_HIDDEN_DEBN, dropout_rate=DROPOUT_RATE, gamma=GAMMA,
-							 target_update = TARGET_UPDATE, replay_time = REPLAY)
+							 target_update = TARGET_UPDATE, replay_time = REPLAY, episodic = False)
 			elif str(args[2])=="dqn":
 				agent = DQNAgent(percept_size, action_size, dim_hidden=NUM_HIDDEN_DQN, dropout_rate=DROPOUT_RATE, target_update=TARGET_UPDATE,
 							 device=DEVICE, learning_rate=LEARNING_RATE, capacity=CAPACITY,
-							 batch_size=BATCH_SIZE, gamma = GAMMA, replay_time = REPLAY)
+							 batch_size=BATCH_SIZE, gamma = GAMMA, replay_time = REPLAY, episodic = False)
 		percept = env.state
 		percept = one_hot(percept)
 		percept = np.reshape(percept, [1, percept_size])

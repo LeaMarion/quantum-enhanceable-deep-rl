@@ -124,7 +124,7 @@ class DQNAgent():
                         is invoked
     """
     def __init__(self, dim_percept, num_actions, dim_hidden=[32], dropout_rate=[0.], target_update=50, device="cpu", learning_rate=0.01,
-                 capacity=1000, gamma=0.9, batch_size=100, replay_time=10, off_policy = False):
+                 capacity=1000, gamma=0.9, batch_size=100, replay_time=10, episodic = True):
         #ERRORS
         if batch_size <= 1:
             raise ValueError("Invalid batch size: batch_size={}.".format(batch_size))
@@ -143,7 +143,7 @@ class DQNAgent():
 
         #the policy network for choosing actions
         train_output_weights = False
-        if off_policy:
+        if episodic:
             train_output_weights = True
         self.policy_net = DQN(dim_percept, num_actions, dim_hidden_=dim_hidden,
                               dropout_rate_=dropout_rate).to(device)
@@ -157,7 +157,7 @@ class DQNAgent():
         self.target_count = 0
         self.replay_time = replay_time
         self.gamma_ps = 1
-        self.off_policy = off_policy
+        self.episodic = episodic
 
         #INTERNAL VARS
         #the optimizer for the policy network
@@ -171,7 +171,7 @@ class DQNAgent():
         self._target_net.load_state_dict(self.policy_net.state_dict())
         #the memory of the agent
         self._memory = deque(maxlen=capacity)
-        if self.off_policy:
+        if self.episodic:
             #the percepts and actions of the current trial
             self._trial_data = deque()
             #the rewards of the current trial
@@ -180,7 +180,7 @@ class DQNAgent():
         self._prev_s = None
         #previous action
         self._prev_a = None
-        if not(self.off_policy):
+        if not(self.episodic):
             #save the current episode in buffer_memory before calculating the accumulated reward
             self._buffer_memory = deque(maxlen=2*replay_time)
         #number of interactions
@@ -237,11 +237,14 @@ class DQNAgent():
 
             return None
 
+        #(3)
+        action = self._choose_action(percept, softmax_e)
+
 
         self._prev_a = torch.LongTensor([np.array([action])])
         self._prev_s = percept
 
-        return None
+        return action
 
     def deliberate(self, percept, softmax_e):
         """
@@ -397,7 +400,7 @@ class DQNAgent():
         """
 
         global _INTERACTION
-        if self.off_policy:
+        if self.episodic:
             for i, data in enumerate(self._trial_data):
                 data = _INTERACTION(data[0], data[1], self._trial_rewards[i])
                 self._memory.append(data)

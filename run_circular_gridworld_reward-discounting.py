@@ -129,11 +129,11 @@ if __name__ == "__main__":
 		agent = DEBNAgent(percept_size, action_length, all_actions,
 						 capacity=CAPACITY, batch_size=BATCH_SIZE, gamma=GAMMA, learning_rate=LR,
 						 dim_hidden=NUM_HIDDEN_DEBN, replay_time=REPLAY,
-						 dropout_rate=DROPOUT, target_update = UPDATE, off_policy = True)
+						 dropout_rate=DROPOUT, target_update = UPDATE)
 		dqn_agent = DQNAgent(percept_size, action_size,
 						 capacity=CAPACITY, batch_size=BATCH_SIZE, gamma=GAMMA, learning_rate=LR,
 						 dim_hidden=NUM_HIDDEN_DQN, replay_time=REPLAY,
-						 dropout_rate=DROPOUT, target_update = UPDATE, off_policy = True)
+						 dropout_rate=DROPOUT, target_update = UPDATE)
 
 		full_losses_debn = []
 		full_losses_dqn = []
