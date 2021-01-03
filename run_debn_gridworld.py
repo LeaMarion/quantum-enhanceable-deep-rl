@@ -124,17 +124,17 @@ if __name__ == "__main__":
         reward = 0.
         done = False
         for t in range(1, MAX_STEPS_PER_TRIAL + 1):
-            action = agent.deliberate(percept, beta[e])
-            action_index = (action[0] == 1).nonzero().item()
-            percept, reward, done, _ = env.step(action_index)
+            action = agent.deliberate_and_learn(percept, reward, GAMMA, beta[e], done)
+            action = (action[0] == 1).nonzero().item()
+            percept, reward, done, _ = env.step(action)
             percept = to_two_hot(percept, DIMENSIONS)
             percept = np.reshape(percept, [1, percept_size])
             percept = torch.Tensor(percept)
             if t==MAX_STEPS_PER_TRIAL:
                 reward = -1
                 done = True
-            agent.learn(percept, action, reward, done)
             if done:
+                agent.deliberate_and_learn(percept, reward, GAMMA, beta[e], done)
                 timesteps.append(t)
                 break
 
