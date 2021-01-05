@@ -111,14 +111,14 @@ if __name__ == "__main__":
 
         while not done:
             t += 1
-            action = agent.deliberate_and_learn(percept, reward, GAMMA, beta[e], done)
+            action = agent.deliberate_and_learn(percept, None, reward, GAMMA, done, beta[e])
             action = (action[0] == 1).nonzero().item()
             percept, reward, done, _ = env.step(action)
             percept = np.reshape(percept, [1, percept_size])
             percept = torch.Tensor(percept)
             if done:
                 timesteps.append(t)
-                agent.deliberate_and_learn(percept, reward, GAMMA, beta[e], done)
+                agent.deliberate_and_learn(percept, None, reward, GAMMA, done, beta[e])
 
 
         if e%1 == 0:

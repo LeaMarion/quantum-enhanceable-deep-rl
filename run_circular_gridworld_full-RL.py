@@ -61,10 +61,10 @@ num_actions = action_size
 
 n_hidden_units_layer = 10 # at largest env size
 nb_hidden_layers = 2
-max_num_actions = int((n_action_units/2)**2)
+max_num_actions = int(((max_num_percepts+1)/2)**2)
 
 # Compute nb weights of debn and dqn
-n_weights = (dim_percept + nb_hidden_layers + max_num_actions)*n_hidden_units_layer+(n_hidden_units_layer**2)*(nb_hidden_layers-1)
+n_weights = (max_num_percepts + nb_hidden_layers + max_num_actions)*n_hidden_units_layer+(n_hidden_units_layer**2)*(nb_hidden_layers-1)
 print("Nb weights: ", n_weights)
 b = dim_percept + nb_hidden_layers + n_action_units
 delta = b**2 + 4*(nb_hidden_layers-1)*(n_weights - dim_percept - n_action_units)

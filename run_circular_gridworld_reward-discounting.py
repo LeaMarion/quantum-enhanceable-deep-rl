@@ -37,7 +37,7 @@ BATCH_SIZE = 10  # size of training batch
 GAMMA = float(args[3])
 LR = 0.01  # learning rate for optimizer
 REPLAY = 10  # every X interactions, the network is trained
-UPDATE = 150  # every X experience replays the target net is updated
+UPDATE = 10  # every X experience replays the target net is updated
 DROPOUT = [0.,0.]  # dropout rate
 
 ###  ENVIRONMENT PARAMETERS
@@ -60,7 +60,7 @@ nb_hidden_layers = 2
 max_num_actions = int(((max_num_percepts+1)/2)**2)
 
 # Compute nb weights debn and dqn
-n_weights = (dim_percept + nb_hidden_layers + max_num_actions)*n_hidden_units_layer+(n_hidden_units_layer**2)*(nb_hidden_layers-1)
+n_weights = (max_num_percepts + nb_hidden_layers + max_num_actions)*n_hidden_units_layer+(n_hidden_units_layer**2)*(nb_hidden_layers-1)
 print("Nb weights: ", n_weights)
 b = dim_percept + nb_hidden_layers + n_action_units
 delta = b**2 + 4*(nb_hidden_layers-1)*(n_weights - dim_percept - n_action_units)

@@ -124,7 +124,7 @@ if __name__ == "__main__":
         reward = 0.
         done = False
         for t in range(1, MAX_STEPS_PER_TRIAL + 1):
-            action = agent.deliberate_and_learn(percept, reward, GAMMA, beta[e], done)
+            action = agent.deliberate_and_learn(percept, None, reward, GAMMA, done, beta[e])
             action = (action[0] == 1).nonzero().item()
             percept, reward, done, _ = env.step(action)
             percept = to_two_hot(percept, DIMENSIONS)
@@ -134,7 +134,7 @@ if __name__ == "__main__":
                 reward = -1
                 done = True
             if done:
-                agent.deliberate_and_learn(percept, reward, GAMMA, beta[e], done)
+                agent.deliberate_and_learn(percept, None, reward, GAMMA, done, beta[e])
                 timesteps.append(t)
                 break
 

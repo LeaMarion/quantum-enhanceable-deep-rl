@@ -247,7 +247,8 @@ class DEBNAgent():
             return None
 			
         #(3)
-        action = self._choose_action(percept, softmax_e)
+        if action is None:
+            action = self._choose_action(percept, softmax_e)
 
 
         self._prev_a = action
