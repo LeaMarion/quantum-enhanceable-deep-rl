@@ -133,7 +133,7 @@ class DEBNAgent():
                         is invoked
     """
     def __init__(self, dim_percept, dim_action, all_actions, dim_hidden=[32], dropout_rate=[0.], target_update=50, device="cpu", learning_rate=0.01,
-                 capacity=1000, gamma=0.9, batch_size=100, replay_time=10, episodic = True):
+                 capacity=1000, gamma=0.9, batch_size=100, replay_time=10, episodic = True, train_output_weights = None):
         #ERRORS
         if batch_size <= 1:
             raise ValueError("Invalid batch size: batch_size={}.".format(batch_size))
@@ -151,9 +151,10 @@ class DEBNAgent():
         ##############
 
         #the policy network for choosing actions
-        train_output_weights = False
-        if episodic:
-            train_output_weights = True
+        if train_output_weights is None:
+            train_output_weights = False
+            if episodic:
+                train_output_weights = True
         self.policy_net = DEBN(dim_percept, dim_action, dim_hidden_=dim_hidden,
                               dropout_rate_=dropout_rate, train_output_weights=train_output_weights).to(device)
 
@@ -390,7 +391,7 @@ class DEBNAgent():
         if reward != 0:
             for i in range(len(self._trial_rewards)-1, -1, -1):
                 r_val = r_val*eta_e
-                if r_val < 1.e-20:
+                if r_val < 1.e-10:
                     break
                 self._trial_rewards[i] += r_val
         self._trial_rewards = torch.cat((self._trial_rewards, torch.Tensor([[reward]])))

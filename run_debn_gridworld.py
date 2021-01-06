@@ -111,7 +111,7 @@ print(filename)
 if __name__ == "__main__":
     agent = DEBNAgent(percept_size, action_size, all_actions, dim_hidden=NUM_HIDDEN, dropout_rate=DROPOUT,
                      device = DEVICE, learning_rate=LEARNING_RATE, capacity=CAPACITY, batch_size=BATCH_SIZE, replay_time=REPLAY_TIME,
-                     target_update = TARGET_UPDATE, gamma = GAMMA)
+                     target_update = TARGET_UPDATE, gamma = GAMMA, train_output_weights = False)
 
     timesteps = []
     for e in range(EPISODES):

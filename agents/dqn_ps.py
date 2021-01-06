@@ -142,9 +142,6 @@ class DQNAgent():
         ##############
 
         #the policy network for choosing actions
-        train_output_weights = False
-        if episodic:
-            train_output_weights = True
         self.policy_net = DQN(dim_percept, num_actions, dim_hidden_=dim_hidden,
                               dropout_rate_=dropout_rate).to(device)
 
@@ -381,7 +378,7 @@ class DQNAgent():
         if reward != 0:
             for i in range(len(self._trial_rewards)-1, -1, -1):
                 r_val = r_val*eta_e
-                if r_val < 1.e-20:
+                if r_val < 1.e-10:
                     break
                 self._trial_rewards[i] += r_val
         self._trial_rewards = torch.cat((self._trial_rewards, torch.Tensor([[reward]])))

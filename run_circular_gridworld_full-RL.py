@@ -119,7 +119,7 @@ if __name__ == "__main__":
 		percept = np.reshape(percept, [1, percept_size])
 		percept = torch.Tensor(percept)
 		rewards = []
-		for e in range(INTERACTIONS):
+		for e in range(INTERACTIONS+1):
 			action = agent.deliberate(percept, softmax[e])
 			if str(args[2])=="dqn":
 				action_tensor = all_actions[action[0]]
